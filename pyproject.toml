@@ -43,6 +43,7 @@ keywords = ["aws", "gcp", "kubernetes", "python"]
 # Package dependencies
 dependencies = [
     "asyncio>=4.0",
+    "cron-converter>=2.0",
     "kopf>=1.44",
     "kubernetes>=36.0",
     "google-cloud-container>=2.65",
@@ -58,12 +59,13 @@ dependencies = [
 [project.scripts]
 # script = "<package>.__main__:<entrypoint>"
 
-[project.entry-points."k8s-autoscaler-plugins"]
-always_on = "src.k8s_autoscaler_plugins.plugins.always_on.plugin"
+[project.entry-points.k8s-autoscaler-plugins]
+always_on = "k8s_autoscaler_plugins.plugins.always_on.plugin"
+cron = "k8s_autoscaler_plugins.plugins.cron.plugin"
 
 [project.optional-dependencies]
 dev = [
-    "chartpress",    
+    "chartpress",
     "hatch",
     "ipython",
     "pre-commit",
