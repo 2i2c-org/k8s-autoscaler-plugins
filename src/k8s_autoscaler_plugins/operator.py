@@ -2,7 +2,12 @@ import kopf
 from typing import Any
 from k8s_autoscaler_plugins.base import Node, Nodepool, NodepoolState
 from k8s_autoscaler_plugins.const import RETRY_LIMIT, ERROR_DELAY
-from k8s_autoscaler_plugins.utils import calculate_target_min_node_count_from_plugins
+from k8s_autoscaler_plugins.utils import PluginScheduler
+
+@kopf.on.startup()
+def startup_fn(logger: kopf.Logger, **_: Any) -> None:
+    global plugin_scheduler
+    plugin_scheduler = PluginScheduler()
 
 # Nodepool allocation target (npat) custom resource
 
@@ -68,7 +73,7 @@ async def reconcile_provider(spec: kopf.Spec, status: kopf.Status, name: str, k8
     nodepool_list = await Nodepool.list_nodepool(node_list)
     for nodepool in nodepool_list:
         # Invoke plugin handlers to get nodepool target minimum node count
-        nodepool = calculate_target_min_node_count_from_plugins(nodepool, spec, logger)
+        nodepool = plugin_scheduler.set_target_min_node_count(nodepool, spec, logger)
         if nodepool.min_node_count == nodepool.target_min_node_count:
             logger.info(f'[{nodepool.name}] Cloud provider minimum node count target state of {nodepool.min_node_count} reached')
             state = NodepoolState.READY.name
@@ -100,7 +105,7 @@ async def reconcile_kubernetes(spec: kopf.Spec, status: kopf.Status, name: str, 
     nodepool_list = await Nodepool.list_nodepool(node_list)
     for nodepool in nodepool_list:
         # Calculate nodepool target minimum node count from plugins
-        nodepool = calculate_target_min_node_count_from_plugins(nodepool, spec, logger)
+        nodepool = plugin_scheduler.set_target_min_node_count(nodepool, spec, logger)
         if nodepool.target_min_node_count <= nodepool.current_node_count:
             logger.info(f'[{nodepool.name}] Target minimum node count ({nodepool.target_min_node_count}) <= Kubernetes nodes online ({nodepool.current_node_count}) reached')
             npat_status = Nodepool.get_status_list(nodepool_list, NodepoolState.READY.name)
