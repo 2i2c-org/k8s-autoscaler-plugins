@@ -59,7 +59,7 @@ dependencies = [
 # script = "<package>.__main__:<entrypoint>"
 
 [project.entry-points."k8s-autoscaler-plugins"]
-always_on = "src.k8s_autoscaler_plugins.plugins.always_on.plugin"
+always_on = "k8s_autoscaler_plugins.plugins.always_on.plugin"
 
 [project.optional-dependencies]
 dev = [
