@@ -4,7 +4,7 @@ import google.api_core
 import kopf
 import logging
 import os
-from abc import ABC
+from abc import ABC, abstractmethod
 from google.cloud import container_v1
 from types import TracebackType
 from typing import TYPE_CHECKING
@@ -22,19 +22,27 @@ class CloudProvider(ABC):
         else:
             self.log = logging.getLogger(__name__)
 
+    @abstractmethod
     async def __aenter__(self):
         ... # Note that `...` is a Python placeholder object
 
+    @abstractmethod
     async def __aexit__(self,
         exc_type: type[BaseException] | None,
         exc: BaseException | None,
         tb: TracebackType | None):
         ...
 
-    async def get_nodepool(self, name: str, zone: str | None = None, region: str | None = None):
+    @abstractmethod
+    async def get_nodepool(self, name: str, zone: str | None = None, region: str | None = None) -> dict:
         ...
 
-    async def set_min_node_count(self, nodepool: Nodepool):
+    @abstractmethod
+    async def list_nodepool(self, label_selector: str = '', zone: str | None = None, region: str | None = None) -> list[dict]:
+        ...
+
+    @abstractmethod
+    async def set_min_node_count(self, nodepool: Nodepool) -> None:
         ...
         
 class GCPProvider(CloudProvider):
@@ -230,6 +238,9 @@ class TestProvider(CloudProvider):
             'max_node_count': 2
         }
         return data
+
+    async def list_nodepool(self, label_selector: str = '', zone: str | None = None, region: str | None = None) -> list[dict]:
+        return []
 
     async def set_min_node_count(self, nodepool: Nodepool) -> None:
         ...
