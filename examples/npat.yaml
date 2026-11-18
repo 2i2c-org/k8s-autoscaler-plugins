@@ -6,10 +6,8 @@ spec:
   nodepoolSelector: topology.kubernetes.io/zone=us-central1-b
   plugins: 
     always_on:
-      priority: 1
       minimum: 1
     cron:
-      priority: 2
-      minimum: 2
-      schedule:
-        - "0-59/1 * * * *" 
+      jobs:
+      - minimum: 2
+        schedule: "0-59/1 * * * *" # local testing: run every minute
