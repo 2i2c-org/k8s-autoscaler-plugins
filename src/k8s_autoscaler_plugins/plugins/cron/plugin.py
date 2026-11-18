@@ -32,6 +32,8 @@ class CronPlugin:
                         logger.info(f"[plugin] {__package__} triggered for scheduled time {s['next_time']}")
                     next_time = next(s['schedule'])
                     s['next_time'] = next_time
+                else:
+                    target_min_node_count = nodepool.target_min_node_count
                 logger.debug(f'{s['next_time']=}')
             logger.debug(f'[plugin] {__package__} succeeded')
             return target_min_node_count
