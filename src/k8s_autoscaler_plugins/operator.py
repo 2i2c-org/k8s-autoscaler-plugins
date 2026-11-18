@@ -70,28 +70,34 @@ async def reconcile_provider(spec: kopf.Spec, status: kopf.Status, name: str, k8
         raise kopf.PermanentError(f'Nodepool allocation target [{name}] in {NodepoolState.ERROR.name} status')
     label_selector = spec.get('nodepoolSelector', {})
     node_list = await Node.list_node(label_selector=label_selector, index=k8s_nodes)
-    nodepool_list = await Nodepool.list_nodepool(node_list)
-    for nodepool in nodepool_list:
-        # Invoke plugin handlers to get nodepool target minimum node count
-        nodepool = plugin_scheduler.set_target_min_node_count(nodepool, spec, logger)
+    current_nodepool_list = await Nodepool.list_nodepool(node_list, status)
+    target_nodepool_list = []
+    # Invoke plugin handlers to schedule nodepool target minimum node count
+    for nodepool in current_nodepool_list:
+        nodepool.target_min_node_count = plugin_scheduler.schedule_target_min_node_count(nodepool, spec, logger)
+        logger.info(f'Scheduled target minimum node count = {nodepool.target_min_node_count}')
         if not hasattr(nodepool, 'target_min_node_count'):
             raise kopf.PermanentError('Target minimum node count could not be determined from plugins.')
+        else:
+            target_nodepool_list.append(nodepool)
+    # Reconcile cloud provider with scheduled target min node count
+    for nodepool in target_nodepool_list:
         if nodepool.min_node_count == nodepool.target_min_node_count:
             logger.info(f'[{nodepool.name}] Cloud provider minimum node count target state of {nodepool.min_node_count} reached')
             state = NodepoolState.READY.name
-            npat_status = Nodepool.get_status_list(nodepool_list, state)
+            npat_status = Nodepool.get_status_list(target_nodepool_list, state)
             patch.status['nodepool_allocation'] = npat_status
         else:
             if retry < RETRY_LIMIT:
                 logger.error(f'Attempt {retry}: reconcile_provider handler')
                 await nodepool.set_min_node_count(nodepool.target_min_node_count)
                 state = NodepoolState.UPDATING.name
-                npat_status = Nodepool.get_status_list(nodepool_list, state)
+                npat_status = Nodepool.get_status_list(target_nodepool_list, state)
                 patch.status['nodepool_allocation'] = npat_status
                 raise kopf.TemporaryError(f'[{nodepool.name}] Cloud provider minimum node count target state of {nodepool.min_node_count} not reached', delay=ERROR_DELAY)
             else:
                 state = NodepoolState.ERROR.name
-                npat_status = Nodepool.get_status_list(nodepool_list, state)
+                npat_status = Nodepool.get_status_list(target_nodepool_list, state)
                 patch.status['nodepool_allocation'] = npat_status
                 raise kopf.PermanentError(f'[{nodepool.name}] Reconciliation of target_min_node_count ({nodepool.target_min_node_count}) == cloud provider minimum node count ({nodepool.min_node_count}) timed out after {RETRY_LIMIT} tries.')
 
@@ -104,10 +110,8 @@ async def reconcile_kubernetes(spec: kopf.Spec, status: kopf.Status, name: str, 
         raise kopf.PermanentError(f'Nodepool allocation target [{name}] in {NodepoolState.ERROR.name} status')
     label_selector = spec.get('nodepoolSelector', {})
     node_list = await Node.list_node(label_selector=label_selector, index=k8s_nodes)
-    nodepool_list = await Nodepool.list_nodepool(node_list)
+    nodepool_list = await Nodepool.list_nodepool(node_list, status)
     for nodepool in nodepool_list:
-        # Calculate nodepool target minimum node count from plugins
-        nodepool = plugin_scheduler.set_target_min_node_count(nodepool, spec, logger)
         if not hasattr(nodepool, 'target_min_node_count'):
             raise kopf.PermanentError('Target minimum node count could not be determined from plugins.')
         if nodepool.target_min_node_count <= nodepool.current_node_count:
