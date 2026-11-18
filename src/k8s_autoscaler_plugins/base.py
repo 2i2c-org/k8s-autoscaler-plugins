@@ -118,16 +118,21 @@ class Nodepool:
         }
 
     @classmethod
-    async def list_nodepool(cls, node_list: list[Node], label_selector: str = '') -> list[Nodepool]:
+    async def list_nodepool(cls, node_list: list[Node], status: kopf.Status = {}, label_selector: str = '') -> list[Nodepool]:
         """
-        List nodepools from a node list.
+        List nodepools from a node list and update target minimum node count from npat status.
         """
+        # Get nodepool list from in-memory index if it exists, otherwise from the cloud provider
         if node_list:
             nodepool_list = [Nodepool.from_node(node) for node in node_list]
         else:
             async with create_provider(PROVIDER_NAME) as provider:
                 nodepool_list_provider = await provider.list_nodepool(label_selector)
                 nodepool_list = [Nodepool.from_provider(nodepool) for nodepool in nodepool_list_provider]
+        # Get zipped dict of nodepool target minimum node counts of each nodepool from npat status
+        if status:
+            npat_status = status.get("nodepool_allocation", {}) # TODO: test multiple nodepools in status
+            nodepool_status_dict = dict(zip(npat_status['name'], npat_status['target_min_node_count']))
         # Get list of unique nodepools
         unique_nodepool_names = set()
         unique_nodepool_list = []
@@ -142,7 +147,9 @@ class Nodepool:
                 nodepool.min_node_count = int(data['min_node_count'])
                 nodepool.max_node_count = int(data['max_node_count'])
                 nodepool.current_node_count = nodepool.get_current_node_count(node_list)
-                nodepool.status = nodepool.get_status(nodepool)
+                if status:
+                    nodepool.target_min_node_count = nodepool_status_dict[nodepool.name]
+                nodepool.status = nodepool.status_to_dict(nodepool)
         return unique_nodepool_list
 
     @classmethod
@@ -178,9 +185,9 @@ class Nodepool:
         async with create_provider(PROVIDER_NAME) as provider:
             await provider.set_min_node_count(self)
 
-    def get_status(self, nodepool: Nodepool) -> dict[str, str | int]:
+    def status_to_dict(self, nodepool: Nodepool) -> dict[str, str | int]:
         """
-        Get nodepool status as a dictionary.
+        Format nodepool status as a dictionary.
         """
         self.status = {
             'name': self.name, 
@@ -194,9 +201,9 @@ class Nodepool:
     @staticmethod
     def get_status_list(nodepool_list: list[Nodepool], state: str) -> dict:
         """
-        Get overall state of nodepool list, with a list of values for each status key.
+        Get overall state of nodepool list, with a list of values for each status key, i.e. convert from list of dicts to dict of lists.
         """
-        # Get list for each status key
+        # Get status keys
         status: dict = dict.fromkeys(iter(nodepool_list[0].status), [])
         for k, v in status.items():
             values = []
