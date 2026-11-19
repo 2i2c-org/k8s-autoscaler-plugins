@@ -1,6 +1,6 @@
 import kopf
 from k8s_autoscaler_plugins.providers.base import CloudProvider
-from k8s_autoscaler_plugins.providers.test import TestProvider
+from k8s_autoscaler_plugins.providers.test_provider import TestProvider
 
 __all__ = ["CloudProvider", "TestProvider", "create_provider"]
 
