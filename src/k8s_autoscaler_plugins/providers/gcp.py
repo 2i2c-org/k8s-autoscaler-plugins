@@ -154,7 +154,7 @@ class GCPProvider(CloudProvider):
         nodepool_limit = self._get_gcp_nodepool_limits(gcp_nodepool)
         # Decide whether to scale
         if target_min_node_count >= nodepool_limit['max']:
-            raise kopf.TemporaryError(f'Target minimum node count {target_min_node_count} exceeds maximum node count of {nodepool_limit['max']}.', delay=ERROR_DELAY)
+            self.log.error(f'[providers] Target minimum node count {target_min_node_count} exceeds maximum node count of {nodepool_limit['max']}.') # don't raise a kopf error here otherwise operator.py cannot apply status patch
         elif target_min_node_count != nodepool_limit['min']:
             gcp_nodepool_autoscaling = container_v1.NodePoolAutoscaling(
                 enabled = gcp_nodepool.autoscaling.enabled,
