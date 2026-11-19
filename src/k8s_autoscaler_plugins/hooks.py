@@ -13,7 +13,7 @@ hookimpl = pluggy.HookimplMarker(PROJECT_NAME)
 class PluginHookSpec:
 
     @hookspec
-    def evaluate_nodepool(nodepool: Nodepool, spec: kopf.Spec, logger: kopf.Logger, args: dict | None = None):
+    def evaluate_nodepool(self, nodepool: Nodepool, spec: kopf.Spec, logger: kopf.Logger, args: dict | None = None):
         """
         Evaluate nodepool object and update target_min_node_count.
         """
