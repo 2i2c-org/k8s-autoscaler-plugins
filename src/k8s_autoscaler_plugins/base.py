@@ -113,7 +113,7 @@ class Nodepool:
         }
 
     @classmethod
-    async def list_nodepool(cls, node_list: list[Node], status: kopf.Status = {}, label_selector: str = '') -> list[Nodepool]:
+    async def list_nodepool(cls, node_list: list[Node], status: kopf.Status | None = None, label_selector: str = '') -> list[Nodepool]:
         """
         List nodepools from a node list and update target minimum node count from npat status.
         """

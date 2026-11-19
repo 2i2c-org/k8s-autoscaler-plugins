@@ -26,7 +26,7 @@ class PluginScheduler:
         else:
             self.log.info(f'Registered plugin packages: {[p.__module__ for p in self.plugins]}')
 
-    def get_hooks(self, plugins: list, spec: kopf.Spec) -> dict:
+    def get_hooks(self, plugins: set, spec: kopf.Spec) -> list:
         names = [self.pm.get_name(plugin) for plugin in plugins]
         specs = [{name: spec.get('plugins', {}).get(name, {})} for name in names] # NOTE: npat spec plugin name must match registered plugin name
         caller = self.pm.hook.evaluate_nodepool # TODO: make hook function name flexible
@@ -52,6 +52,6 @@ class PluginScheduler:
                 logger.info(f'[plugin] [{hook.plugin_name}] target_min_node_count={result}')
                 results.append(result)
             else:
-                logger.info(f'[plugin] [{hook.plugin_name}] No target minimum node count determined')
+                logger.info(f'[plugin] [{hook.plugin_name}] No target minimum node count scheduled')
         return max(results)
 

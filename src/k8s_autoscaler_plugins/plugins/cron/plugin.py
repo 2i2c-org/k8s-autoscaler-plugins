@@ -23,6 +23,7 @@ class CronPlugin:
                 schedule = cron_instance.schedule(reference)
                 next_time = next(schedule)
                 self.schedule_list.append({'minimum': minimum, 'schedule': schedule, 'next_time': next_time})
+            return nodepool.target_min_node_count
         else:
             for s in self.schedule_list:
                 now_time = datetime.datetime.now(datetime.UTC) 
