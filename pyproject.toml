@@ -46,7 +46,6 @@ dependencies = [
     "cron-converter>=2.0",
     "kopf>=1.44",
     "kubernetes>=36.0",
-    "google-cloud-container>=2.65",
     "pluggy>=1.7",
 ]
 
@@ -64,6 +63,9 @@ always_on = "k8s_autoscaler_plugins.plugins.always_on.plugin:AlwaysOnPlugin"
 cron = "k8s_autoscaler_plugins.plugins.cron.plugin:CronPlugin"
 
 [project.optional-dependencies]
+gcp = [
+    "google-cloud-container>=2.65",
+]
 dev = [
     "chartpress",
     "hatch",
@@ -147,7 +149,7 @@ post-install-commands = [
 description = """
 Environment for local development.
 """
-features = ["dev"]
+features = ["dev", "gcp"]
 path = ".venv"
 
 [tool.hatch.envs.release]
@@ -219,6 +221,7 @@ check = ["pip-audit"]
 
 [tool.hatch.envs.types]
 description = """Check the static types of the codebase."""
+features = ["gcp"]
 dependencies = [
     "mypy",
     "types-PyYAML"

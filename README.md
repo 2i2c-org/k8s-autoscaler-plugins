@@ -23,7 +23,7 @@ A Kubernetes cluster (`k3s`, `minikube`, `Docker`, etc.).
 For local development, install the package with
 
 ```bash
-pip install -e '.[dev]'
+pip install -e '.[dev,gcp]'
 ```
 
 Install the `NodepoolAllocationTarget` [custom resource definition](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/) (CRD) with
