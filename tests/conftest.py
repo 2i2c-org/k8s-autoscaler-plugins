@@ -1,9 +1,11 @@
 import logging
 import json
+import kopf
 import pytest
 import subprocess
 from pathlib import Path
 from k8s_autoscaler_plugins.providers import create_provider
+from k8s_autoscaler_plugins.utils import PluginScheduler
 
 logger = logging.getLogger(__name__)
 
@@ -74,3 +76,9 @@ def fixture_node():
     with open(f'{TEST_DIR}/fixtures/node.json', 'r') as f:
         data = json.load(f)
     yield data
+
+@pytest.fixture(scope='class')
+def fixture_memo():
+    memo = kopf.Memo()
+    memo.plugin_scheduler = PluginScheduler(logger=logger)
+    yield memo

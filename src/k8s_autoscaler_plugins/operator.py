@@ -5,9 +5,8 @@ from k8s_autoscaler_plugins.const import RETRY_LIMIT, ERROR_DELAY
 from k8s_autoscaler_plugins.utils import PluginScheduler
 
 @kopf.on.startup()
-def startup_fn(logger: kopf.Logger, **_: Any) -> None:
-    global plugin_scheduler
-    plugin_scheduler = PluginScheduler(logger=logger)
+def startup_fn(memo: kopf.Memo, logger: kopf.Logger, **_: Any) -> None:
+    memo.plugin_scheduler = PluginScheduler(logger=logger)
 
 # Nodepool allocation target (npat) custom resource
 
@@ -62,10 +61,11 @@ def k8s_nodes(body: kopf.Body, labels: kopf.Labels, logger: kopf.Logger, **kwarg
     return None
 
 @kopf.timer('nodepoolallocationtarget', interval=10) # type: ignore[arg-type]
-async def reconcile_provider(spec: kopf.Spec, status: kopf.Status, name: str, k8s_nodes: kopf.Index, patch: kopf.Patch, logger: kopf.Logger, retry: int, **kwargs: Any) -> None:
+async def reconcile_provider(spec: kopf.Spec, status: kopf.Status, name: str, k8s_nodes: kopf.Index, memo: kopf.Memo, patch: kopf.Patch, logger: kopf.Logger, retry: int, **kwargs: Any) -> None:
     """
     Regularly reconcile target minimum node count is equal to cloud provider config.
     """
+    plugin_scheduler = memo.plugin_scheduler
     if status.get('nodepool_allocation', {}).get('status', '') == NodepoolState.ERROR.name:
         raise kopf.PermanentError(f'Nodepool allocation target [{name}] in {NodepoolState.ERROR.name} status')
     label_selector = spec.get('nodepoolSelector', {})

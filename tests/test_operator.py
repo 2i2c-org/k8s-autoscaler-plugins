@@ -4,6 +4,7 @@ from .conftest import logger
 from k8s_autoscaler_plugins.base import NodepoolState
 from k8s_autoscaler_plugins.operator import nodepool_allocation, delete_nodepool_allocation, k8s_nodes, reconcile_provider, reconcile_kubernetes
 from k8s_autoscaler_plugins.const import RETRY_LIMIT
+from k8s_autoscaler_plugins.utils import PluginScheduler
 
 
 class TestOperator:
@@ -67,7 +68,7 @@ class TestOperator:
         ({'min_node_count': 0, 'max_node_count': 2, 'target_min_node_count': 1, 'nodepoolSelector': 'topology.kubernetes.io/zone=us-central1-b', 'name': 'test-pool-1'}, {'status': NodepoolState.UPDATING.name, 'raises': True, 'timeout': False}),
         ({'min_node_count': 0, 'max_node_count': 2, 'target_min_node_count': 1, 'nodepoolSelector': 'topology.kubernetes.io/zone=us-central1-b', 'name': 'test-pool-1'}, {'status': NodepoolState.ERROR.name, 'raises': True, 'timeout': True})
         ])
-    async def test_reconcile_provider(self, fixture_node_index, test_input, test_output, mocker):
+    async def test_reconcile_provider(self, fixture_memo, fixture_node_index, test_input, test_output, mocker):
         """
         Test reconciliation target minimum node count state == current cloud provider minimum node count state.
 
@@ -76,6 +77,8 @@ class TestOperator:
           1. Reconciliation does not succeed and is below RETRY_LIMIT then raises kopf.TemporaryError
           3. Reconciliation does not succeed and is above RETRY_LIMIT then raises kopf.PermanentError
         """
+        # global plugin_scheduler
+        # plugin_scheduler = PluginScheduler(logger=logger)
         current_node_count = 0  # We're not parametrizing current node count here.
         # Set kopf handler inputs
         spec = {'nodepoolSelector': test_input['nodepoolSelector'], 'plugins': {'always_on': {'priority': 1, 'minimum': test_input['target_min_node_count']}}}
@@ -94,16 +97,16 @@ class TestOperator:
             logger.info(f'{retry=}')
             if test_output['raises']:
                 with pytest.raises(kopf.TemporaryError):
-                    await reconcile_provider(spec = spec, status=status, name = self.npat_name, k8s_nodes = fixture_node_index, patch=patch, logger=logger, retry = retry)
+                    await reconcile_provider(spec = spec, status=status, name = self.npat_name, k8s_nodes = fixture_node_index, memo = fixture_memo, patch=patch, logger=logger, retry = retry)
                     assert status['nodepool_allocation']['status'] == test_output['status']
             else:
-                await reconcile_provider(spec = spec, status=status, name = self.npat_name, k8s_nodes = fixture_node_index, patch=patch, logger=logger, retry = retry)
+                await reconcile_provider(spec = spec, status=status, name = self.npat_name, k8s_nodes = fixture_node_index, memo = fixture_memo, patch=patch, logger=logger, retry = retry)
                 assert status['nodepool_allocation']['status'] == test_output['status']
             retry += 1
         if test_output['timeout']:
             with pytest.raises(kopf.PermanentError):
                 logger.info(f'{retry=}')
-                await reconcile_provider(spec = spec, status=status, name = self.npat_name, k8s_nodes = fixture_node_index, patch=patch, logger=logger, retry = retry)
+                await reconcile_provider(spec = spec, status=status, name = self.npat_name, k8s_nodes = fixture_node_index, memo = fixture_memo, patch=patch, logger=logger, retry = retry)
                 assert status['nodepool_allocation']['status'] == test_output['status']
             # PermanentError if npat in ERROR status
             with pytest.raises(kopf.PermanentError):
