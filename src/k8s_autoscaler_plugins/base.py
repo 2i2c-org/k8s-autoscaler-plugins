@@ -128,6 +128,8 @@ class Nodepool:
         if status:
             npat_status = status.get("nodepool_allocation", {}) # TODO: test multiple nodepools in status
             nodepool_status_dict = dict(zip(npat_status['name'], npat_status['target_min_node_count']))
+        else:
+            nodepool_status_dict = {}
         # Get list of unique nodepools
         unique_nodepool_names = set()
         unique_nodepool_list = []
@@ -142,7 +144,7 @@ class Nodepool:
                 nodepool.min_node_count = int(data['min_node_count'])
                 nodepool.max_node_count = int(data['max_node_count'])
                 nodepool.current_node_count = nodepool.get_current_node_count(node_list)
-                if status:
+                if nodepool_status_dict:
                     nodepool.target_min_node_count = nodepool_status_dict[nodepool.name]
                 nodepool.status = nodepool.status_to_dict(nodepool)
         return unique_nodepool_list
