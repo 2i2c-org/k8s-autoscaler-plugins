@@ -48,10 +48,10 @@ class PluginScheduler:
         results = []
         for hook in hooks:
             result = hook.function(nodepool=nodepool, spec=spec, logger = logger)
-            if result:
+            if result >= 0:
                 logger.info(f'[plugin] [{hook.plugin_name}] target_min_node_count={result}')
                 results.append(result)
             else:
-                logger.info(f'[plugin] [{hook.plugin_name}] No target minimum node count scheduled')
+                logger.warning(f'[plugin] [{hook.plugin_name}] No target minimum node count scheduled')
         return max(results)
 

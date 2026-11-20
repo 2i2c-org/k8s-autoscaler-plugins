@@ -75,7 +75,7 @@ async def reconcile_provider(spec: kopf.Spec, status: kopf.Status, name: str, k8
     # Invoke plugin handlers to schedule nodepool target minimum node count
     for nodepool in current_nodepool_list:
         nodepool.target_min_node_count = plugin_scheduler.schedule_target_min_node_count(nodepool, spec, logger)
-        logger.info(f'Scheduled target minimum node count = {nodepool.target_min_node_count}')
+        logger.info(f'Scheduled target minimum node count={nodepool.target_min_node_count}')
         if not hasattr(nodepool, 'target_min_node_count'):
             raise kopf.PermanentError('Target minimum node count could not be determined from plugins.')
         else:
