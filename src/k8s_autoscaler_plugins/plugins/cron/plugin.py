@@ -38,3 +38,4 @@ class CronPlugin:
                 else:
                     target_min_node_count = nodepool.target_min_node_count
                     return target_min_node_count
+        return 0
