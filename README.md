@@ -35,7 +35,7 @@ kubectl apply -f helm/k8s_autoscaler_plugins/crds/nodepool_allocation_target.yam
 > [!note]
 > CRDs fundamentally alter the Kubernetes API. If `nodepool_allocation_target.yaml` is updated, then remember to delete and re-register the CRD.
 >
-> See the [Helm docs](https://helm.sh/docs/chart_best_practices/custom_resource_definitions/) for working with CRDs in Helm.  # TODO: write more docs for how to install in a prod environment.
+> See the [Helm docs](https://helm.sh/docs/chart_best_practices/custom_resource_definitions/) for working with CRDs in Helm. # TODO: write more docs for how to install in a prod environment.
 
 Run the `kopf` operator with
 
