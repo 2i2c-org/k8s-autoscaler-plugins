@@ -11,7 +11,7 @@ requires = ["hatchling", "hatch-vcs"]
 ################################################################################
 
 [project]
-name = "k8s-node-operator"
+name = "k8s-autoscaler-plugins"
 
 dynamic = ["version"]
 
@@ -42,25 +42,32 @@ keywords = ["aws", "gcp", "kubernetes", "python"]
 
 # Package dependencies
 dependencies = [
-    "asyncio~=4.0",
-    "kopf~=1.44",
-    "kubernetes~=36.0",
-    "google-cloud-container~=2.65",
-    "traitlets~=5.0"
+    "asyncio>=4.0",
+    "cron-converter>=2.0",
+    "kopf>=1.44",
+    "kubernetes>=36.0",
+    "pluggy>=1.7",
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/2i2c-org/k8s-node-operator"
-"Source Code" = "https://github.com/2i2c-org/k8s-node-operator"
-"Bug Tracker" = "https://github.com/2i2c-org/k8s-node-operator/issues"
-"Documentation" = "https://k8s-node-operator.readthedocs.io/en/latest/"
+"Homepage" = "https://github.com/2i2c-org/k8s-autoscaler-plugins"
+"Source Code" = "https://github.com/2i2c-org/k8s-autoscaler-plugins"
+"Bug Tracker" = "https://github.com/2i2c-org/k8s-autoscaler-plugins/issues"
+"Documentation" = "https://k8s-autoscaler-plugins.readthedocs.io/en/latest/"
 
-# [project.scripts]
+[project.scripts]
 # script = "<package>.__main__:<entrypoint>"
 
+[project.entry-points.k8s-autoscaler-plugins]
+always_on = "k8s_autoscaler_plugins.plugins.always_on.plugin:AlwaysOnPlugin"
+cron = "k8s_autoscaler_plugins.plugins.cron.plugin:CronPlugin"
+
 [project.optional-dependencies]
+gcp = [
+    "google-cloud-container>=2.65",
+]
 dev = [
-    "chartpress",    
+    "chartpress",
     "hatch",
     "ipython",
     "pre-commit",
@@ -75,10 +82,10 @@ dev = [
 only-packages = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/k8s_node_operator"]
+packages = ["src/k8s_autoscaler_plugins"]
 
 [tool.hatch.build.hooks.vcs]
-version-file = "src/k8s_node_operator/_version.py"
+version-file = "src/k8s_autoscaler_plugins/_version.py"
 
 [tool.hatch.version]
 source = "vcs"
@@ -86,12 +93,19 @@ source = "vcs"
 [tool.hatch.version.raw-options]
 version_scheme = "no-guess-dev"
 
+[tool.hatch.envs.default.sources]
+always_on = "./src/k8s_autoscaler_plugins/plugins/always_on"
+
 # The default isort output conflicts with black autoformatting.
 # Tell isort to behave nicely with black
 # See https://pycqa.github.io/isort/docs/configuration/black_compatibility.html
 # for more information.
 [tool.isort]
 profile = "black"
+line_length = 88
+
+[tool.black]
+line-length = 88
 
 [tool.pydoclint]
 style = "google"  # TODO: Other styles are possible here, like 'numpy'
@@ -101,19 +115,24 @@ check-yield-types = false
 exclude = "_version.py"
 
 [tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "session"
 testpaths = ["tests"]
 markers = ["raises"]
+env = [
+    "K8S_AUTOSCALER_PLUGINS_CLOUD_PROVIDER=TEST",
+    "K8S_AUTOSCALER_PLUGINS_RETRY_LIMIT=2",
+]
 
 [tool.coverage.paths]
 source = [
-    "src/k8s_node_operator",
+    "src/k8s_autoscaler_plugins",
 ]
 
 [tool.coverage.run]
 branch = true
 parallel = true
 omit = [
-    "src/k8s_node_operator/_version.py",
+    "src/k8s_autoscaler_plugins/_version.py",
 ]
 
 [tool.coverage.report]
@@ -135,7 +154,7 @@ post-install-commands = [
 description = """
 Environment for local development.
 """
-features = ["dev"]
+features = ["dev", "gcp"]
 path = ".venv"
 
 [tool.hatch.envs.release]
@@ -149,7 +168,7 @@ dependencies = [
 ]
 
 [tool.hatch.envs.install]
-description = """Test the installation the package."""
+description = """Test the installation of the package."""
 dependencies = [
     "pip",
     "twine",
@@ -170,7 +189,10 @@ Run test suite
 """
 dependencies = [
     "pytest",
+    "pytest-asyncio",
     "pytest-cov",
+    "pytest-env",
+    "pytest-mock",
     "pytest-raises",
     "pytest-randomly",
     "pytest-xdist",
@@ -180,7 +202,7 @@ dependencies = [
 python = ["3.12", "3.13", "3.14"]
 
 [tool.hatch.envs.test.scripts]
-run = "pytest {args:--cov=src/k8s_node_operator --cov-report=term-missing --cov-report=xml}"
+run = "pytest {args:--cov=src/k8s_autoscaler_plugins --cov-report=term-missing --cov-report=xml}"
 
 [tool.hatch.envs.style]
 description = """Check the style of the codebase."""
@@ -204,13 +226,14 @@ check = ["pip-audit"]
 
 [tool.hatch.envs.types]
 description = """Check the static types of the codebase."""
+features = ["gcp"]
 dependencies = [
     "mypy",
     "types-PyYAML"
 ]
 
 [tool.hatch.envs.types.scripts]
-check = "mypy --ignore-missing-imports src/k8s_node_operator"
+check = "mypy --ignore-missing-imports src/k8s_autoscaler_plugins"
 
 [tool.hatch.envs.docs]
 description = """Build or serve the documentation."""

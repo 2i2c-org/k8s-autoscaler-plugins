@@ -1,6 +1,9 @@
 apiVersion: jupyter.org/v1
 kind: NodepoolAllocationTarget
 metadata:
-  name: "{name}"
+  name: '{name}'
 spec:
-  minimumNodeCount: "{minimumNodeCount}"
+  plugins:
+    always_on:
+      priority: 1
+      minimum: '{minimum}'

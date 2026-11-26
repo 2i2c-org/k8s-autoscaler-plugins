@@ -1,0 +1,15 @@
+apiVersion: jupyter.org/v1
+kind: NodepoolAllocationTarget
+metadata:
+  name: example-npat
+spec:
+  nodepoolSelector: topology.kubernetes.io/zone=us-central1-b
+  plugins:
+    always_on:
+      minimum: 1
+    cron:
+      jobs:
+      - minimum: 0
+        schedule: '*/3 * * * *' # local testing: run every 3 minutes
+      - minimum: 2
+        schedule: '*/2 * * * *' # local testing: run every 2 minutes
