@@ -4,7 +4,7 @@ import kopf
 
 from k8s_autoscaler_plugins.base import Node, Nodepool, NodepoolState
 from k8s_autoscaler_plugins.const import ERROR_DELAY, RETRY_LIMIT
-from k8s_autoscaler_plugins.utils import PluginScheduler
+from k8s_autoscaler_plugins.scheduler import PluginScheduler
 
 
 @kopf.on.startup()

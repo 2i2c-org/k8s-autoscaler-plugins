@@ -3,7 +3,7 @@ import os
 import subprocess
 import sys
 
-from k8s_autoscaler_plugins.utils import PluginScheduler
+from k8s_autoscaler_plugins.scheduler import PluginScheduler
 
 
 class TestPluginManager:
@@ -23,7 +23,7 @@ class TestPluginManager:
         env["K8S_AUTOSCALER_PLUGINS_CLOUD_PROVIDER"] = "TEST"
         code = (
             "import logging\n"
-            "from k8s_autoscaler_plugins.utils import PluginScheduler\n"
+            "from k8s_autoscaler_plugins.scheduler import PluginScheduler\n"
             "scheduler = PluginScheduler(logger=logging.getLogger())\n"
             'print(",".join(sorted(scheduler.pm.get_name(p) for p in scheduler.plugins)))\n'
         )

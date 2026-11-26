@@ -7,7 +7,7 @@ import kopf
 import pytest
 
 from k8s_autoscaler_plugins.providers import create_provider
-from k8s_autoscaler_plugins.utils import PluginScheduler
+from k8s_autoscaler_plugins.scheduler import PluginScheduler
 
 logger = logging.getLogger(__name__)
 
