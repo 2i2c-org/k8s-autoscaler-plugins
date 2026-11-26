@@ -29,7 +29,7 @@ pip install -e '.[dev,gcp]'
 Install the `NodepoolAllocationTarget` [custom resource definition](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/) (CRD) with
 
 ```bash
-kubectl apply -f helm/k8s_autoscaler_plugins/crds/nodepool_allocation_target.yaml
+kubectl apply -f helm-charts/k8s_autoscaler_plugins/crds/nodepool_allocation_target.yaml
 ```
 
 > [!note]

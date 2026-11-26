@@ -15,7 +15,7 @@ PROJECT_DIR = Path(__file__).parent.parent
 SRC_DIR = PROJECT_DIR.joinpath("src/k8s_autoscaler_plugins")
 TEST_DIR = PROJECT_DIR.joinpath("tests")
 CRD_FILE = PROJECT_DIR.joinpath(
-    "helm/k8s_autoscaler_plugins/crds/nodepool_allocation_target.yaml"
+    "helm-charts/k8s_autoscaler_plugins/crds/nodepool_allocation_target.yaml"
 )
 
 

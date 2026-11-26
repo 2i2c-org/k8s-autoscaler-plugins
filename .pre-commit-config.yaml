@@ -53,4 +53,4 @@ repos:
   rev: v1.0.0
   hooks:
   - id: ruamelfmt
-    exclude: helm/.*|templates/.*
+    exclude: helm-charts/.*|templates/.*
