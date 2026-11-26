@@ -40,7 +40,7 @@ kubectl apply -f helm-charts/k8s_autoscaler_plugins/crds/nodepool_allocation_tar
 Run the `kopf` operator with
 
 ```bash
-kopf run -A src/k8s_node_operator/operator.py
+kopf run -A src/k8s_autoscaler_plugins/operator.py
 ```
 
 > [!note]
@@ -94,7 +94,7 @@ The following example usage is based on scaling nodes in a GCP GKE cluster nodep
 1. Run the `kopf` operator
 
    ```bash
-   kopf run -A src/k8s_node_operator/operator.py
+   kopf run -A src/k8s_autoscaler_plugins/operator.py
    ```
 
 1. In another terminal window, scale the GCP nodepool by creating an `npat` object with
