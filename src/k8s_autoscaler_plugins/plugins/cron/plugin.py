@@ -24,18 +24,14 @@ class CronPlugin:
         if not self.schedule_list:
             # One-time set up of cron schedules using a reference time when first called
             self.spec_list = spec.get("plugins", {}).get("cron", {}).get("jobs", [])
-            reference = datetime.datetime.now(
-                datetime.UTC
-            )  # TODO: add support for timezone aware schedules
+            reference = datetime.datetime.now(datetime.UTC)  # TODO: add support for timezone aware schedules
             for spec in self.spec_list:
                 minimum = spec.get("minimum", 0)  # TODO: spec validation
                 cron_instance = Cron()
                 cron_instance.from_string(spec.get("schedule", ""))
                 schedule = cron_instance.schedule(reference)
                 next_time = next(schedule)
-                self.schedule_list.append(
-                    {"minimum": minimum, "schedule": schedule, "next_time": next_time}
-                )
+                self.schedule_list.append({"minimum": minimum, "schedule": schedule, "next_time": next_time})
                 logger.debug(
                     f"[plugin] [{self.plugin_name}] Initialised job {schedule.cron.to_string()}: target_min_node_count={minimum} at {next_time}"
                 )

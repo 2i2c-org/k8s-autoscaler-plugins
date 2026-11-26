@@ -27,9 +27,7 @@ class TestProvider(CloudProvider):
     async def __aexit__(self, exc_type, exc, tb):
         self._exited = True
 
-    async def get_nodepool(
-        self, name: str, zone: str | None = None, region: str | None = None
-    ) -> dict:
+    async def get_nodepool(self, name: str, zone: str | None = None, region: str | None = None) -> dict:
         data = {"name": name, "min_node_count": 0, "max_node_count": 2}
         return data
 

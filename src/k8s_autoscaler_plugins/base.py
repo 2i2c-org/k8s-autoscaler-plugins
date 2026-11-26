@@ -35,9 +35,7 @@ class Node:
         self.nodepool_name = nodepool_name
 
     @classmethod
-    async def list_node(
-        cls, label_selector: str = "", index: kopf.Index | None = None
-    ) -> list[Node]:
+    async def list_node(cls, label_selector: str = "", index: kopf.Index | None = None) -> list[Node]:
         """
         List nodes by label selector from in-memory kopf index if it exists, otherwise make a Kubernetes API call.
         """
@@ -53,9 +51,7 @@ class Node:
         """
         async with KubernetesClient() as client:
             try:
-                node_list = await client.api_core.list_node(
-                    label_selector=label_selector
-                )
+                node_list = await client.api_core.list_node(label_selector=label_selector)
             except Exception as e:
                 raise kopf.TemporaryError(f"{e}")
         return [cls.from_k8s_node(node, label_selector) for node in node_list.items]
@@ -158,18 +154,11 @@ class Nodepool:
         else:
             async with create_provider(PROVIDER_NAME) as provider:
                 nodepool_list_provider = await provider.list_nodepool(label_selector)
-                nodepool_list = [
-                    Nodepool.from_provider(nodepool)
-                    for nodepool in nodepool_list_provider
-                ]
+                nodepool_list = [Nodepool.from_provider(nodepool) for nodepool in nodepool_list_provider]
         # Get zipped dict of nodepool target minimum node counts of each nodepool from npat status
         if status:
-            npat_status = status.get(
-                "nodepool_allocation", {}
-            )  # TODO: test multiple nodepools in status
-            nodepool_status_dict = dict(
-                zip(npat_status["name"], npat_status["target_min_node_count"])
-            )
+            npat_status = status.get("nodepool_allocation", {})  # TODO: test multiple nodepools in status
+            nodepool_status_dict = dict(zip(npat_status["name"], npat_status["target_min_node_count"]))
         else:
             nodepool_status_dict = {}
         # Get list of unique nodepools
@@ -182,9 +171,7 @@ class Nodepool:
         # Get nodepool config from cloud provider
         async with create_provider(PROVIDER_NAME) as provider:
             for nodepool in unique_nodepool_list:
-                data = await provider.get_nodepool(
-                    name=nodepool.name, zone=nodepool.zone, region=nodepool.region
-                )
+                data = await provider.get_nodepool(name=nodepool.name, zone=nodepool.zone, region=nodepool.region)
                 nodepool.min_node_count = int(data["min_node_count"])
                 nodepool.max_node_count = int(data["max_node_count"])
                 nodepool.current_node_count = nodepool.get_current_node_count(node_list)

@@ -18,6 +18,10 @@ repos:
   rev: 26.10.1
   hooks:
   - id: black
+- repo: https://github.com/asottile/pyupgrade
+  rev: v3.22.0
+  hooks:
+  - id: pyupgrade
 - repo: https://github.com/pycqa/isort
   rev: 10.0.0b3
   hooks:

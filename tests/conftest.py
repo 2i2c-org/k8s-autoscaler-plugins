@@ -14,9 +14,7 @@ logger = logging.getLogger(__name__)
 PROJECT_DIR = Path(__file__).parent.parent
 SRC_DIR = PROJECT_DIR.joinpath("src/k8s_autoscaler_plugins")
 TEST_DIR = PROJECT_DIR.joinpath("tests")
-CRD_FILE = PROJECT_DIR.joinpath(
-    "helm/k8s_autoscaler_plugins/crds/nodepool_allocation_target.yaml"
-)
+CRD_FILE = PROJECT_DIR.joinpath("helm/k8s_autoscaler_plugins/crds/nodepool_allocation_target.yaml")
 
 
 @pytest.fixture(scope="class")
@@ -36,9 +34,7 @@ def kind_cluster():
     try:
         yield
     finally:
-        subprocess.run(
-            ["kind", "delete", "cluster", "--name", "test-cluster"], check=True
-        )
+        subprocess.run(["kind", "delete", "cluster", "--name", "test-cluster"], check=True)
 
 
 @pytest.fixture(scope="session")
@@ -59,7 +55,7 @@ def fixture_node_index():
 
     TODO: generalise for other cloud providers
     """
-    with open(f"{TEST_DIR}/fixtures/node_index.json", "r") as f:
+    with open(f"{TEST_DIR}/fixtures/node_index.json") as f:
         data = json.load(f)
     yield data
 
@@ -71,7 +67,7 @@ def fixture_node():
 
     TODO: generalise for other cloud providers
     """
-    with open(f"{TEST_DIR}/fixtures/node.json", "r") as f:
+    with open(f"{TEST_DIR}/fixtures/node.json") as f:
         data = json.load(f)
     yield data
 

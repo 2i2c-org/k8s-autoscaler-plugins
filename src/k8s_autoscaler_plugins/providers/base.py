@@ -16,9 +16,7 @@ class CloudProvider(ABC):
     Abstract base class with Kubernetes API methods and standardizes the construction of all cloud providers (see https://peps.python.org/pep-3119/).
     """
 
-    def __init__(
-        self, logger: kopf.Logger | None = None, timeout: int = 300, interval: int = 10
-    ):
+    def __init__(self, logger: kopf.Logger | None = None, timeout: int = 300, interval: int = 10):
         if logger:
             self.log = logger
         else:
@@ -36,9 +34,7 @@ class CloudProvider(ABC):
     ): ...
 
     @abstractmethod
-    async def get_nodepool(
-        self, name: str, zone: str | None = None, region: str | None = None
-    ) -> dict: ...
+    async def get_nodepool(self, name: str, zone: str | None = None, region: str | None = None) -> dict: ...
 
     @abstractmethod
     async def list_nodepool(
