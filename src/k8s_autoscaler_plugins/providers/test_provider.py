@@ -11,9 +11,7 @@ from k8s_autoscaler_plugins.providers.base import CloudProvider
 
 
 class TestProvider(CloudProvider):
-    """
-    No-op cloud provider for testing and mocking.
-    """
+    """No-op cloud provider for testing and mocking."""
 
     def __init__(self, logger: kopf.Logger | None = None):
         super().__init__(logger=logger)
@@ -27,7 +25,9 @@ class TestProvider(CloudProvider):
     async def __aexit__(self, exc_type, exc, tb):
         self._exited = True
 
-    async def get_nodepool(self, name: str, zone: str | None = None, region: str | None = None) -> dict:
+    async def get_nodepool(
+        self, name: str, zone: str | None = None, region: str | None = None
+    ) -> dict:
         data = {"name": name, "min_node_count": 0, "max_node_count": 2}
         return data
 

@@ -16,9 +16,7 @@ from k8s_autoscaler_plugins.providers.base import CloudProvider
 
 
 class GCPProvider(CloudProvider):
-    """
-    Methods for Google Cloud Platform (GCP).
-    """
+    """Methods for Google Cloud Platform (GCP)."""
 
     def __init__(self, logger: kopf.Logger | None = None):
         super().__init__(logger=logger)
@@ -30,7 +28,9 @@ class GCPProvider(CloudProvider):
         self.log.debug(self.credentials.get_cred_info())
 
     async def __aenter__(self):
-        self.client = container_v1.ClusterManagerAsyncClient(credentials=self.credentials)
+        self.client = container_v1.ClusterManagerAsyncClient(
+            credentials=self.credentials
+        )
         return self
 
     async def __aexit__(self, exc_type, exc, tb):
@@ -39,9 +39,13 @@ class GCPProvider(CloudProvider):
     def _get_prefix_project(self) -> str:
         return f"projects/{self.project_name}"
 
-    def _get_prefix_location(self, location: bool = False, zone: str | None = None, region: str | None = None) -> str:
+    def _get_prefix_location(
+        self, location: bool = False, zone: str | None = None, region: str | None = None
+    ) -> str:
         if location:
-            return "/".join([self._get_prefix_project(), f"locations/{self.cluster_location}"])
+            return "/".join(
+                [self._get_prefix_project(), f"locations/{self.cluster_location}"]
+            )
         else:
             return (
                 "/".join([self._get_prefix_project(), f"zones/{zone}"])
@@ -49,30 +53,47 @@ class GCPProvider(CloudProvider):
                 else "/".join([self._get_prefix_project(), f"region/{region}"])
             )
 
-    def _get_prefix_cluster(self, location: bool = False, zone: str | None = None, region: str | None = None):
+    def _get_prefix_cluster(
+        self, location: bool = False, zone: str | None = None, region: str | None = None
+    ):
         prefix = self._get_prefix_location(location, zone, region)
-        request_name = "/".join([prefix, f"clusters/{self.cluster_name}"])  # TODO: use YARL
+        request_name = "/".join(
+            [prefix, f"clusters/{self.cluster_name}"]
+        )  # TODO: use YARL
         return request_name
 
-    def _get_request_nodepool(self, name: str, zone: str | None = None, region: str | None = None):
+    def _get_request_nodepool(
+        self, name: str, zone: str | None = None, region: str | None = None
+    ):
         prefix = self._get_prefix_cluster(zone=zone, region=region)
         request_name = "/".join([prefix, f"nodePools/{name}"])  # TODO: use YARL
         return request_name
 
-    def _list_request_nodepool(self, location: bool = True, zone: str | None = None, region: str | None = None):
+    def _list_request_nodepool(
+        self, location: bool = True, zone: str | None = None, region: str | None = None
+    ):
         request_name = self._get_prefix_cluster(location, zone, region)
         return request_name
 
     def _get_gcp_nodepool_limits(self, gcp_nodepool: container_v1.NodePool) -> dict:
+        """Helper method to determine whether nodepool autoscaler limits are total.
+
+        (returns True) or zonal (returns False), and returns values.
+
+        Total and zonal limits are mutually exclusive.
         """
-        Helper method to determine whether nodepool autoscaler limits are total (returns True) or zonal (returns False), and returns values. Total and zonal limits are mutually exclusive.
-        """
-        if gcp_nodepool.autoscaling.min_node_count == 0 and gcp_nodepool.autoscaling.max_node_count == 0:
+        if (
+            gcp_nodepool.autoscaling.min_node_count == 0
+            and gcp_nodepool.autoscaling.max_node_count == 0
+        ):
             return {
                 "min": gcp_nodepool.autoscaling.total_min_node_count,
                 "max": gcp_nodepool.autoscaling.total_max_node_count,
             }
-        elif gcp_nodepool.autoscaling.total_min_node_count == 0 and gcp_nodepool.autoscaling.total_max_node_count == 0:
+        elif (
+            gcp_nodepool.autoscaling.total_min_node_count == 0
+            and gcp_nodepool.autoscaling.total_max_node_count == 0
+        ):
             return {
                 "min": gcp_nodepool.autoscaling.min_node_count,
                 "max": gcp_nodepool.autoscaling.max_node_count,
@@ -86,18 +107,16 @@ class GCPProvider(CloudProvider):
     async def _get_gcp_nodepool(
         self, name: str, zone: str | None = None, region: str | None = None
     ) -> container_v1.NodePool:
-        """
-        Request a vendor-specific GCP nodepool.
-        """
+        """Request a vendor-specific GCP nodepool."""
         request_name = self._get_request_nodepool(name, zone, region)
         request = container_v1.GetNodePoolRequest(name=request_name)
         nodepool = await self.client.get_node_pool(request=request)
         return nodepool
 
-    async def get_nodepool(self, name: str, zone: str | None = None, region: str | None = None) -> dict:
-        """
-        Get non-vendor-specific nodepool config.
-        """
+    async def get_nodepool(
+        self, name: str, zone: str | None = None, region: str | None = None
+    ) -> dict:
+        """Get non-vendor-specific nodepool config."""
         gcp_nodepool = await self._get_gcp_nodepool(name, zone, region)
         nodepool_limit = self._get_gcp_nodepool_limits(gcp_nodepool)
         return {
@@ -112,9 +131,7 @@ class GCPProvider(CloudProvider):
         zone: str | None = None,
         region: str | None = None,
     ) -> list[dict]:
-        """
-        Convert vendor-specific nodepool list to vendor-agnostic nodepool list.
-        """
+        """Convert vendor-specific nodepool list to vendor-agnostic nodepool list."""
         request_parent = self._list_request_nodepool(zone=zone, region=region)
         request = container_v1.ListNodePoolsRequest(parent=request_parent)
         response = await self.client.list_node_pools(request)
@@ -137,7 +154,11 @@ class GCPProvider(CloudProvider):
                 if self.cluster_location:
                     cluster_location_split = self.cluster_location.split("-")
                     region = "".join(cluster_location_split[0:2])
-                    zone = self.cluster_location if len(cluster_location_split) == 3 else ""
+                    zone = (
+                        self.cluster_location
+                        if len(cluster_location_split) == 3
+                        else ""
+                    )
                 nodepool_dict = {
                     "name": nodepool.name,
                     "zone": zone,
@@ -150,9 +171,7 @@ class GCPProvider(CloudProvider):
     async def wait_gcp_operation(
         self, operation_name: str, zone: str | None = None, region: str | None = None
     ) -> container_v1.Operation:
-        """
-        Blocking call to wait until operation is completed.
-        """
+        """Blocking call to wait until operation is completed."""
         name = "/".join(
             [
                 self._get_prefix_location(zone=zone, region=region),
@@ -164,17 +183,19 @@ class GCPProvider(CloudProvider):
         while True:
             response = await self.client.get_operation(request=request)
             if response.status != container_v1.Operation.Status.DONE:
-                self.log.debug(f"Operation is {container_v1.Operation.Status(response.status).name}")
+                self.log.debug(
+                    f"Operation is {container_v1.Operation.Status(response.status).name}"
+                )
             # TODO: backoff on error
             else:
                 return response
 
     async def set_min_node_count(self, nodepool: Nodepool) -> None:
-        """
-        Set the autoscaling minimum node count of a GCP nodepool.
-        """
+        """Set the autoscaling minimum node count of a GCP nodepool."""
         target_min_node_count = nodepool.target_min_node_count
-        gcp_nodepool = await self._get_gcp_nodepool(name=nodepool.name, zone=nodepool.zone, region=nodepool.region)
+        gcp_nodepool = await self._get_gcp_nodepool(
+            name=nodepool.name, zone=nodepool.zone, region=nodepool.region
+        )
         nodepool_limit = self._get_gcp_nodepool_limits(gcp_nodepool)
         # Decide whether to scale
         if target_min_node_count >= nodepool_limit["max"]:
@@ -188,7 +209,9 @@ class GCPProvider(CloudProvider):
                 max_node_count=nodepool_limit["max"],
                 location_policy=gcp_nodepool.autoscaling.location_policy,
             )
-            request_name = self._get_request_nodepool(nodepool.name, nodepool.zone, nodepool.region)
+            request_name = self._get_request_nodepool(
+                nodepool.name, nodepool.zone, nodepool.region
+            )
             request = container_v1.SetNodePoolAutoscalingRequest(
                 name=request_name, autoscaling=gcp_nodepool_autoscaling
             )
@@ -205,6 +228,10 @@ class GCPProvider(CloudProvider):
                     zone=nodepool.zone,
                     region=nodepool.region,
                 )
-            self.log.debug(f"Minimum node count {target_min_node_count} request sent to cloud provider.")
+            self.log.debug(
+                f"Minimum node count {target_min_node_count} request sent to cloud provider."
+            )
         else:
-            self.log.debug(f"Minimum node count is already set to {target_min_node_count}.")
+            self.log.debug(
+                f"Minimum node count is already set to {target_min_node_count}."
+            )

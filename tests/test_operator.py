@@ -26,15 +26,17 @@ class TestOperator:
             ([1, "topology.kubernetes.io/zone=us-central1-c"], "test-pool-2"),
         ],
     )
-    async def test_nodepool_allocation(self, fixture_node_index, test_input, test_output):
-        """
-        Test parametrized input returns parametrized output.
-        """
+    async def test_nodepool_allocation(
+        self, fixture_node_index, test_input, test_output
+    ):
+        """Test parametrized input returns parametrized output."""
         spec = {
             "nodepoolSelector": test_input[1],
             "plugins": {"always_on": {"minimum": test_input[0]}},
         }  # TODO: spec.plugins subject to change
-        status = await nodepool_allocation(spec=spec, k8s_nodes=fixture_node_index, logger=logger)
+        status = await nodepool_allocation(
+            spec=spec, k8s_nodes=fixture_node_index, logger=logger
+        )
         assert status["name"][0] == test_output
 
     @pytest.mark.asyncio
@@ -71,9 +73,11 @@ class TestOperator:
             ),
         ],
     )
-    async def test_delete_nodepool_allocation(self, fixture_node_index, test_input, test_output, mocker):
-        """
-        Test reconciliation target min node count == cloud provider min node count upon npat deletion.
+    async def test_delete_nodepool_allocation(
+        self, fixture_node_index, test_input, test_output, mocker
+    ):
+        """Test reconciliation target min node count == cloud provider min node count
+        upon npat deletion.
 
         Parameter tests:
           0. Reconciliation succeeds, no need to retry
@@ -86,7 +90,9 @@ class TestOperator:
             "plugins": {"always_on": {"priority": 1, "minimum": target_min_node_count}},
         }  # TODO: spec.plugins subject to change
         # Mock API calls to cloud provider
-        mock_get_nodepool = mocker.patch("k8s_autoscaler_plugins.providers.TestProvider.get_nodepool")
+        mock_get_nodepool = mocker.patch(
+            "k8s_autoscaler_plugins.providers.TestProvider.get_nodepool"
+        )
         mock_get_nodepool.return_value = {
             "name": test_input["name"],
             "min_node_count": test_input["min_node_count"],
@@ -94,18 +100,22 @@ class TestOperator:
         }
         if test_output["raises"]:
             with pytest.raises(kopf.TemporaryError):
-                status = await delete_nodepool_allocation(spec=spec, k8s_nodes=fixture_node_index, logger=logger)
+                status = await delete_nodepool_allocation(
+                    spec=spec, k8s_nodes=fixture_node_index, logger=logger
+                )
         else:
-            status = await delete_nodepool_allocation(spec=spec, k8s_nodes=fixture_node_index, logger=logger)
+            status = await delete_nodepool_allocation(
+                spec=spec, k8s_nodes=fixture_node_index, logger=logger
+            )
             assert status.get("target_min_node_count", "") == [target_min_node_count]
             assert status.get("min_node_count", "") == [test_input["min_node_count"]]
             assert status.get("status") == test_output["status"]
 
     def test_k8s_nodes(self, fixture_node):
-        """
-        Test in-memory index returns ready k8s nodes.
-        """
-        data = k8s_nodes(body=fixture_node, labels=fixture_node["metadata"]["labels"], logger=logger)
+        """Test in-memory index returns ready k8s nodes."""
+        data = k8s_nodes(
+            body=fixture_node, labels=fixture_node["metadata"]["labels"], logger=logger
+        )
         # TODO: generalize for other cloud providers
         assert data["cloud.google.com/gke-nodepool"] == "test-pool-1"
 
@@ -149,9 +159,11 @@ class TestOperator:
             ),
         ],
     )
-    async def test_reconcile_provider(self, fixture_memo, fixture_node_index, test_input, test_output, mocker):
-        """
-        Test reconciliation target minimum node count state == current cloud provider minimum node count state.
+    async def test_reconcile_provider(
+        self, fixture_memo, fixture_node_index, test_input, test_output, mocker
+    ):
+        """Test reconciliation target minimum node count state == current cloud provider
+        minimum node count state.
 
         Parameter tests:
           0. Reconciliation succeeds, no need to retry
@@ -184,7 +196,9 @@ class TestOperator:
         patch = kopf.Patch
         patch.status = status
         # Mock API calls to cloud provider in base.Nodepool.list_nodepool()
-        mock_get_nodepool = mocker.patch("k8s_autoscaler_plugins.providers.TestProvider.get_nodepool")
+        mock_get_nodepool = mocker.patch(
+            "k8s_autoscaler_plugins.providers.TestProvider.get_nodepool"
+        )
         mock_get_nodepool.return_value = {
             "name": test_input["name"],
             "min_node_count": test_input["min_node_count"],
@@ -205,7 +219,9 @@ class TestOperator:
                         logger=logger,
                         retry=retry,
                     )
-                    assert status["nodepool_allocation"]["status"] == test_output["status"]
+                    assert (
+                        status["nodepool_allocation"]["status"] == test_output["status"]
+                    )
             else:
                 await reconcile_provider(
                     spec=spec,
@@ -285,9 +301,11 @@ class TestOperator:
             ),
         ],
     )
-    async def test_reconcile_kubernetes(self, fixture_node_index, test_input, test_output, mocker):
-        """
-        Test reconciliation target minimum node count state <= current Kubernetes node count state.
+    async def test_reconcile_kubernetes(
+        self, fixture_node_index, test_input, test_output, mocker
+    ):
+        """Test reconciliation target minimum node count state <= current Kubernetes
+        node count state.
 
         Parameter tests:
           0. Reconciliation succeeds, no need to retry
@@ -320,13 +338,17 @@ class TestOperator:
         patch = kopf.Patch
         patch.status = status
         # Mock API calls to cloud provider
-        mock_get_nodepool = mocker.patch("k8s_autoscaler_plugins.providers.TestProvider.get_nodepool")
+        mock_get_nodepool = mocker.patch(
+            "k8s_autoscaler_plugins.providers.TestProvider.get_nodepool"
+        )
         mock_get_nodepool.return_value = {
             "name": test_input["name"],
             "min_node_count": min_node_count,
             "max_node_count": max_node_count,
         }
-        mock_get_current_node_count = mocker.patch("k8s_autoscaler_plugins.base.Nodepool.get_current_node_count")
+        mock_get_current_node_count = mocker.patch(
+            "k8s_autoscaler_plugins.base.Nodepool.get_current_node_count"
+        )
         mock_get_current_node_count.return_value = test_input["current_node_count"]
         retry = 0
         while retry < RETRY_LIMIT:
@@ -342,7 +364,9 @@ class TestOperator:
                         logger=logger,
                         retry=retry,
                     )
-                    assert status["nodepool_allocation"]["status"] == test_output["status"]
+                    assert (
+                        status["nodepool_allocation"]["status"] == test_output["status"]
+                    )
             else:
                 await reconcile_kubernetes(
                     spec=spec,

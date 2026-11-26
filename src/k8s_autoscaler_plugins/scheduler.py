@@ -26,14 +26,18 @@ class PluginScheduler:
         if not self.plugins:
             raise kopf.PermanentError("No k8s autoscaler plugins registered.")
         else:
-            self.log.info(f"Registered plugin packages: {[p.__module__ for p in self.plugins]}")
+            self.log.info(
+                f"Registered plugin packages: {[p.__module__ for p in self.plugins]}"
+            )
 
     def get_hooks(self, plugins: set, spec: kopf.Spec) -> list:
         names = [self.pm.get_name(plugin) for plugin in plugins]
         specs = [
             {name: spec.get("plugins", {}).get(name, {})} for name in names
         ]  # NOTE: npat spec plugin name must match registered plugin name
-        caller = self.pm.hook.evaluate_nodepool  # TODO: make hook function name flexible
+        caller = (
+            self.pm.hook.evaluate_nodepool
+        )  # TODO: make hook function name flexible
         hooks = caller.get_hookimpls()
         # Remove hooks for plugins with an empty spec # TODO: write test for this
         for s in specs:
@@ -44,17 +48,23 @@ class PluginScheduler:
                             hooks.remove(hook)
         return hooks
 
-    def schedule_target_min_node_count(self, nodepool: Nodepool, spec: kopf.Spec, logger: kopf.Logger) -> Nodepool:
-        """
-        Call plugin hooks and schedule target minimum node count to the maximum value over all plugins.
+    def schedule_target_min_node_count(
+        self, nodepool: Nodepool, spec: kopf.Spec, logger: kopf.Logger
+    ) -> Nodepool:
+        """Call plugin hooks and schedule target minimum node count to the maximum value
+        over all plugins.
         """
         hooks = self.get_hooks(self.plugins, spec)
         results = []
         for hook in hooks:
             result = hook.function(nodepool=nodepool, spec=spec, logger=logger)
             if result >= 0:
-                logger.info(f"[plugin] [{hook.plugin_name}] target_min_node_count={result}")
+                logger.info(
+                    f"[plugin] [{hook.plugin_name}] target_min_node_count={result}"
+                )
                 results.append(result)
             else:
-                logger.warning(f"[plugin] [{hook.plugin_name}] No target minimum node count scheduled")
+                logger.warning(
+                    f"[plugin] [{hook.plugin_name}] No target minimum node count scheduled"
+                )
         return max(results)

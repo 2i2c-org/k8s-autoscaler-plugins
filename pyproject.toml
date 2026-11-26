@@ -102,13 +102,10 @@ always_on = "./src/k8s_autoscaler_plugins/plugins/always_on"
 # for more information.
 [tool.isort]
 profile = "black"
-line_length = 120
+line_length = 88
 
 [tool.black]
-line-length = 120
-
-[tool.flake8]
-max-line-length = 120
+line-length = 88
 
 [tool.pydoclint]
 style = "google"  # TODO: Other styles are possible here, like 'numpy'

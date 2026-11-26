@@ -11,9 +11,7 @@ from k8s_autoscaler_plugins.providers import create_provider
 
 
 class Node:
-    """
-    Abstract the concept of a node independently of cloud-specific vendors.
-    """
+    """Abstract the concept of a node independently of cloud-specific vendors."""
 
     name_label = "kubernetes.io/hostname"
     region_label = "topology.kubernetes.io/region"
@@ -35,9 +33,11 @@ class Node:
         self.nodepool_name = nodepool_name
 
     @classmethod
-    async def list_node(cls, label_selector: str = "", index: kopf.Index | None = None) -> list[Node]:
-        """
-        List nodes by label selector from in-memory kopf index if it exists, otherwise make a Kubernetes API call.
+    async def list_node(
+        cls, label_selector: str = "", index: kopf.Index | None = None
+    ) -> list[Node]:
+        """List nodes by label selector from in-memory kopf index if it exists,
+        otherwise make a Kubernetes API call.
         """
         if index:
             return cls.from_index(index=index, label_selector=label_selector)
@@ -46,28 +46,35 @@ class Node:
 
     @classmethod
     async def from_k8s_api(cls, label_selector: str = "") -> list[Node]:
-        """
-        Get a list of Node objects from Kubernetes API call.
-        """
+        """Get a list of Node objects from Kubernetes API call."""
         async with KubernetesClient() as client:
             try:
-                node_list = await client.api_core.list_node(label_selector=label_selector)
+                node_list = await client.api_core.list_node(
+                    label_selector=label_selector
+                )
             except Exception as e:
                 raise kopf.TemporaryError(f"{e}")
         return [cls.from_k8s_node(node, label_selector) for node in node_list.items]
 
     @classmethod
     def from_k8s_node(cls, node: client.V1Node, label_selector: str = "") -> Node:
-        """
-        Construct a Node object from a client.V1Node element of the from_k8s_api() method.
-        """
-        return cls(node_name=node.metadata.labels[cls.name_label], region=node.metadata.labels[cls.region_label], zone=node.metadata.labels[cls.zone_label], label_selector=label_selector, nodepool_name=node.metadata.labels[cls.nodepool_label])  # type: ignore[union-attr, index]
+        """Construct a Node object from a client.V1Node element of the from_k8s_api() method."""
+        if not node.metadata or not node.metadata.labels:
+            raise AttributeError(
+                f"Node object {node} has no attribute `metadata` or `labels`."
+            )
+        labels = node.metadata.labels
+        return cls(
+            node_name=labels[cls.name_label],
+            region=labels[cls.region_label],
+            zone=labels[cls.zone_label],
+            label_selector=label_selector,
+            nodepool_name=labels[cls.nodepool_label],
+        )
 
     @classmethod
     def from_index(cls, index: kopf.Index, label_selector: str = "") -> list[Node]:
-        """
-        Construct a list of Node objects from the kopf in-memory index of Kubernetes nodes.
-        """
+        """Construct a list of Node objects from the kopf in-memory index of Kubernetes nodes."""
         # Convert dict of list to list of dict
         node_list_dict = [dict(zip(index, v)) for v in zip(*index.values())]
         node_list = []
@@ -79,9 +86,7 @@ class Node:
 
     @classmethod
     def from_dict(cls, node: dict, label_selector: str = "") -> Node | None:
-        """
-        Construct a Node object from a node_list element of the from_index() method.
-        """
+        """Construct a Node object from a node_list element of the from_index() method."""
         if label_selector:
             label_selector_split = label_selector.split("=")
             label_selector_name = label_selector_split[0]
@@ -107,9 +112,7 @@ class Node:
 
 
 class NodepoolState(Enum):
-    """
-    An enumerated list of nodepool states.
-    """
+    """An enumerated list of nodepool states."""
 
     READY = 1
     UPDATING = 2
@@ -117,9 +120,7 @@ class NodepoolState(Enum):
 
 
 class Nodepool:
-    """
-    Abstract the concept of a nodepool independently of cloud-specific vendors.
-    """
+    """Abstract the concept of a nodepool independently of cloud-specific vendors."""
 
     def __init__(self, name: str, zone: str, region: str, label_selector: str):
         self.name = name
@@ -145,8 +146,8 @@ class Nodepool:
         status: kopf.Status | None = None,
         label_selector: str = "",
     ) -> list[Nodepool]:
-        """
-        List nodepools from a node list and update target minimum node count from npat status.
+        """List nodepools from a node list and update target minimum node count from
+        npat status.
         """
         # Get nodepool list from in-memory index if it exists, otherwise from the cloud provider
         if node_list:
@@ -154,11 +155,18 @@ class Nodepool:
         else:
             async with create_provider(PROVIDER_NAME) as provider:
                 nodepool_list_provider = await provider.list_nodepool(label_selector)
-                nodepool_list = [Nodepool.from_provider(nodepool) for nodepool in nodepool_list_provider]
+                nodepool_list = [
+                    Nodepool.from_provider(nodepool)
+                    for nodepool in nodepool_list_provider
+                ]
         # Get zipped dict of nodepool target minimum node counts of each nodepool from npat status
         if status:
-            npat_status = status.get("nodepool_allocation", {})  # TODO: test multiple nodepools in status
-            nodepool_status_dict = dict(zip(npat_status["name"], npat_status["target_min_node_count"]))
+            npat_status = status.get(
+                "nodepool_allocation", {}
+            )  # TODO: test multiple nodepools in status
+            nodepool_status_dict = dict(
+                zip(npat_status["name"], npat_status["target_min_node_count"])
+            )
         else:
             nodepool_status_dict = {}
         # Get list of unique nodepools
@@ -171,7 +179,9 @@ class Nodepool:
         # Get nodepool config from cloud provider
         async with create_provider(PROVIDER_NAME) as provider:
             for nodepool in unique_nodepool_list:
-                data = await provider.get_nodepool(name=nodepool.name, zone=nodepool.zone, region=nodepool.region)
+                data = await provider.get_nodepool(
+                    name=nodepool.name, zone=nodepool.zone, region=nodepool.region
+                )
                 nodepool.min_node_count = int(data["min_node_count"])
                 nodepool.max_node_count = int(data["max_node_count"])
                 nodepool.current_node_count = nodepool.get_current_node_count(node_list)
@@ -182,9 +192,7 @@ class Nodepool:
 
     @classmethod
     def from_node(cls, node: Node) -> Nodepool:
-        """
-        Construct Nodepool object from Node object.
-        """
+        """Construct Nodepool object from Node object."""
         return cls(
             name=node.nodepool_name,
             zone=node.zone,
@@ -194,9 +202,7 @@ class Nodepool:
 
     @classmethod
     def from_provider(cls, nodepool) -> Nodepool:
-        """
-        Construct Nodepool object from provider.list_nodepool() output.
-        """
+        """Construct Nodepool object from provider.list_nodepool() output."""
         return cls(
             name=nodepool["name"],
             zone=nodepool["zone"],
@@ -205,9 +211,7 @@ class Nodepool:
         )
 
     def get_current_node_count(self, node_list: list[Node]) -> int:
-        """
-        Get current node count from node list.
-        """
+        """Get current node count from node list."""
         node_count = 0
         for node in node_list:
             if node.nodepool_name == self.name:
@@ -215,18 +219,14 @@ class Nodepool:
         return node_count
 
     async def set_min_node_count(self, target_min_node_count: int | None = None):
-        """
-        Set nodepool minimum node count with cloud provider.
-        """
+        """Set nodepool minimum node count with cloud provider."""
         if target_min_node_count:
             self.target_min_node_count = target_min_node_count
         async with create_provider(PROVIDER_NAME) as provider:
             await provider.set_min_node_count(self)
 
     def status_to_dict(self, nodepool: Nodepool) -> dict[str, str | int]:
-        """
-        Format nodepool status as a dictionary.
-        """
+        """Format nodepool status as a dictionary."""
         self.status = {
             "name": self.name,
             "min_node_count": self.min_node_count,
@@ -238,8 +238,8 @@ class Nodepool:
 
     @staticmethod
     def get_status_list(nodepool_list: list[Nodepool], state: str) -> dict:
-        """
-        Get overall state of nodepool list, with a list of values for each status key, i.e. convert from list of dicts to dict of lists.
+        """Get overall state of nodepool list, with a list of values for each status
+        key, i.e. convert from list of dicts to dict of lists.
         """
         # Get status keys
         status: dict = dict.fromkeys(iter(nodepool_list[0].status), [])
@@ -267,8 +267,9 @@ class KubernetesClient:
         await self.api_client.close()
 
     async def load_kubernetes_config(self) -> None:
-        """
-        Tries to authenticate to Kubernetes API from within a pod at first for production environments, otherwise it loads your local Kubernetes config context from `~/.kube/config` for local development environments.
+        """Tries to authenticate to Kubernetes API from within a pod at first for
+        production environments, otherwise it loads your local Kubernetes config context
+        from ``~/.kube/config`` for local development environments.
         """
         try:
             config.load_incluster_config()
@@ -276,9 +277,7 @@ class KubernetesClient:
             await config.load_kube_config()
 
     async def get_custom_resource_object(self, name: str):
-        """
-        Get a Kubernetes custom resource object by name.
-        """
+        """Get a Kubernetes custom resource object by name."""
         try:
             obj = await self.api_custom_objects.get_cluster_custom_object(
                 group=self.group, version=self.version, plural=self.plural, name=name

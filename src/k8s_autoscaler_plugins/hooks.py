@@ -1,6 +1,4 @@
-"""
-Define hook specs for autoscaler plugins using Pluggy.
-"""
+"""Define hook specs for autoscaler plugins using Pluggy."""
 
 import kopf
 import pluggy
@@ -22,6 +20,4 @@ class PluginHookSpec:
         logger: kopf.Logger,
         args: dict | None = None,
     ):
-        """
-        Evaluate nodepool object and update target_min_node_count.
-        """
+        """Evaluate nodepool object and update target_min_node_count."""
