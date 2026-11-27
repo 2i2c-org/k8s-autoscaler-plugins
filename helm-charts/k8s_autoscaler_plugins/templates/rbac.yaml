@@ -15,15 +15,20 @@ rules:
     resources: [validatingwebhookconfigurations, mutatingwebhookconfigurations]
     verbs: [create, patch]
 
+  # Framework: posting the events about the handlers progress/errors.
+  - apiGroups: [""]
+    resources: [events]
+    verbs: [create]
+
   # Application: watching and handling CRDs.
   - apiGroups: [jupyter.org]
     resources: [nodepoolallocationtargets]
     verbs: [get, list, watch, patch]
 
-  # Application: list nodes
+  # Application: watch nodes
   - apiGroups: [""] # Core API group
     resources: [nodes]
-    verbs: [list]
+    verbs: [get, list, watch]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
