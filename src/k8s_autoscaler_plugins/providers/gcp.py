@@ -139,16 +139,16 @@ class GCPProvider(CloudProvider):
         for nodepool in list(response.node_pools):
             if label_selector:
                 label_selector_split = label_selector.split("=")
-                label_selector_name = label_selector_split[0]
                 label_selector_value = label_selector_split[1]
-                label_dict = dict(nodepool.config.labels)
-                if {label_selector_name: label_selector_value} == label_dict:
+                if label_selector_value == nodepool.name:
                     nodepool_dict = {
                         "name": nodepool.name,
                         "zone": zone if zone else self.cluster_location,
                         "region": region if region else self.cluster_location,
                         "label_selector": label_selector,
                     }
+                else:
+                    continue
             else:
                 # Split location into region and zone
                 if self.cluster_location:
