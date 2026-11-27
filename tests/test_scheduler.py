@@ -6,7 +6,7 @@ import sys
 from k8s_autoscaler_plugins.scheduler import PluginScheduler
 
 
-class TestPluginManager:
+class TestPluginScheduler:
 
     def test_plugins_registered(self):
         """Test that the bundled plugins are registered from their entry points."""
