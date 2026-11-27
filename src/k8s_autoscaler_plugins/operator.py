@@ -24,7 +24,7 @@ async def nodepool_allocation(
     # List nodepools that match the node label selector
     label_selector = spec.get("nodepoolSelector", {})
     node_list = await Node.list_node(label_selector=label_selector, index=k8s_nodes)
-    nodepool_list = await Nodepool.list_nodepool(node_list)
+    nodepool_list = await Nodepool.list_nodepool(node_list, label_selector)
     npat_status = Nodepool.get_status_list(nodepool_list, NodepoolState.UPDATING.name)
     return npat_status
 
@@ -37,12 +37,12 @@ async def delete_nodepool_allocation(
     retries=RETRY_LIMIT,
     **kwargs: Any,
 ) -> dict | None:
-    """Set minimum node count to 0 on delete."""
+    """Set minimum node count to 0 on delete."""  # TODO: add deleting status?
     label_selector = spec.get("nodepoolSelector", {})
     target_min_node_count = 0
     # List k8s nodepools with node label selector
     node_list = await Node.list_node(label_selector=label_selector, index=k8s_nodes)
-    nodepool_list = await Nodepool.list_nodepool(node_list)
+    nodepool_list = await Nodepool.list_nodepool(node_list, label_selector)
     for nodepool in nodepool_list:
         if nodepool.min_node_count != nodepool.target_min_node_count:
             await nodepool.set_min_node_count(target_min_node_count)
@@ -106,7 +106,9 @@ async def reconcile_provider(
         )
     label_selector = spec.get("nodepoolSelector", {})
     node_list = await Node.list_node(label_selector=label_selector, index=k8s_nodes)
-    current_nodepool_list = await Nodepool.list_nodepool(node_list, status)
+    current_nodepool_list = await Nodepool.list_nodepool(
+        node_list, label_selector, status
+    )
     target_nodepool_list = []
     # Invoke plugin handlers to schedule nodepool target minimum node count
     for nodepool in current_nodepool_list:
@@ -175,7 +177,7 @@ async def reconcile_kubernetes(
         )
     label_selector = spec.get("nodepoolSelector", {})
     node_list = await Node.list_node(label_selector=label_selector, index=k8s_nodes)
-    nodepool_list = await Nodepool.list_nodepool(node_list, status)
+    nodepool_list = await Nodepool.list_nodepool(node_list, label_selector, status)
     for nodepool in nodepool_list:
         if not hasattr(nodepool, "target_min_node_count"):
             raise kopf.PermanentError(

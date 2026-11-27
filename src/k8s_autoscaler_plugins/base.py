@@ -143,8 +143,8 @@ class Nodepool:
     async def list_nodepool(
         cls,
         node_list: list[Node],
-        status: kopf.Status | None = None,
         label_selector: str = "",
+        status: kopf.Status | None = None,
     ) -> list[Nodepool]:
         """List nodepools from a node list and update target minimum node count from
         npat status.
@@ -218,7 +218,7 @@ class Nodepool:
                 node_count += 1
         return node_count
 
-    async def set_min_node_count(self, target_min_node_count: int | None = None):
+    async def set_min_node_count(self, target_min_node_count: int, label_selector=""):
         """Set nodepool minimum node count with cloud provider."""
         if target_min_node_count:
             self.target_min_node_count = target_min_node_count

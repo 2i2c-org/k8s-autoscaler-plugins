@@ -3,7 +3,7 @@ kind: NodepoolAllocationTarget
 metadata:
   name: example-npat
 spec:
-  nodepoolSelector: topology.kubernetes.io/zone=us-central1-b
+  nodepoolSelector: cloud.google.com/gke-nodepool=test-pool-1
   plugins:
     always_on:
       minimum: 1
