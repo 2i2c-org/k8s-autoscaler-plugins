@@ -3,6 +3,24 @@ entries:
   k8s-autoscaler-plugins:
   - apiVersion: v2
     appVersion: 0.1.0
+    created: "2026-11-27T16:52:46.103653603Z"
+    description: Scale nodes for your k8s cluster ahead of time with plugins.
+    digest: c402d83eb858c76bfd41c64310f317d573d2b020040b7ef9e28e1b77453ce2b1
+    home: https://github.com/2i2c-org/k8s-autoscaler-plugins
+    keywords:
+    - aws
+    - gcp
+    - kubernetes
+    - python
+    name: k8s-autoscaler-plugins
+    sources:
+    - https://github.com/2i2c-org/k8s-autoscaler-plugins
+    type: application
+    urls:
+    - https://2i2c.org/k8s-autoscaler-plugins/k8s-autoscaler-plugins-0.0.1-0.dev.git.238.h09e58c2.tgz
+    version: 0.0.1-0.dev.git.238.h09e58c2
+  - apiVersion: v2
+    appVersion: 0.1.0
     created: "2026-11-27T12:12:06.177899702Z"
     description: Scale nodes for your k8s cluster ahead of time with plugins.
     digest: 5c280371286b089b3a944aa3d70af290197b6bb1cca604721649760f354d619b
@@ -416,4 +434,4 @@ entries:
     urls:
     - https://2i2c.org/k8s-node-operator/k8s-node-operator-0.0.1-0.dev.git.17.hef520d3.tgz
     version: 0.0.1-0.dev.git.17.hef520d3
-generated: "2026-11-27T12:12:06.177087433Z"
+generated: "2026-11-27T16:52:46.102927839Z"
